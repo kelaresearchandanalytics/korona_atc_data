@@ -1,0 +1,190 @@
+---
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo = FALSE, include = FALSE}
+ragg_png = function(..., res = 192) {
+  ragg::agg_png(..., res = res, units = "in")
+}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-",
+  dev = "ragg_png",
+  warning = FALSE, 
+  message = FALSE
+)
+library(dplyr)
+```
+
+<br/>
+
+<img align="right" height="32px" src="https://www.kela.fi/image/layout_set_logo?img_id=2174196&t=1585229282595">
+
+# Reseptilääkkeiden ostot ATC-luokituksen mukaisesti
+
+
+## Aineiston kuvaus
+                           
+Sairausvakuutus maksaa korvausta niiden reseptilääkkeiden kustannuksista, joille on vahvistettu korvattavuus ja kohtuullinen tukkuhinta. Lisäksi korvataan lääkkeitä vastaavien valmisteiden kustannuksia. Lääkkeitä vastaavia valmisteita ovat eräiden vaikeiden sairauksien hoidossa käytettävät kliiniset ravintovalmisteet ja pitkäaikaisen ihotaudin hoitoon käytettävät perusvoiteet.
+
+Aineistosta on poistettu ne lääkeaineet, joita on yhtenä tai useampana viikkona ostanut alle 10 henkilöä.
+
+Aineistossa on mukana tarkastelujakson aikana ostettujen, apteekkien välityksellä korvattujen lääkkeiden ja vastaavien valmisteiden tiedot atc-luokan ja sairaanhoitopiirin mukaan viikkotasolla sisältäen seuraavat muuttujat:
+
+```{r, echo = FALSE}
+meta <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/metadata_viikko.csv')
+meta %>% distinct(CODE,NAME,DESCRIPTION,CLASS) %>% 
+  arrange(CODE) %>% 
+  knitr::kable()
+```
+
+
+## Aineiston käyttäminen
+
+Sovelluksen käyttämä aineisto on vapaasti käytettävissä [Nimeä 4.0 Kansainvälinen (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/deed.fi)-lisenssin ehdoilla.
+
+Klikkaa linkistä hiiren oikealla näppäimellä ja valitse "tallenna linkki nimellä" ja anna tiedostopäätteeksi `csv`.
+
+- Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv" download="data_viikko.csv">data_viikko.csv</a>
+- Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/metadata_viikko.csv" download="metadata_viikko.csv">metadata_viikko.csv</a>
+
+Aineisto päivittyy kerran viikossa keskiviikkoaamuisin.
+
+## Käyttöesimerkki R-kielellä
+
+**Datojen lataaminen**
+
+```{r, eval = TRUE}
+df <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv')
+head(df)
+```
+
+
+```{r, eval = TRUE}
+meta <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/metadata_viikko.csv')
+head(meta)
+```
+
+**Viivakuvio ATC-luokasta `R`**
+
+```{r, fig.width=9, fig.height=9}
+library(ggplot2)
+library(dplyr)
+options(scipen = 999)
+dat <- df %>% 
+  filter(ALUEKOODI == 99,
+         ATC_KOODI == "R") %>% 
+  tidyr::pivot_longer(names_to = "muuttuja", 
+                      values_to = "arvo", 
+                      cols = starts_with("VAR_")) %>% 
+  left_join(meta, by = c("muuttuja" = "CODE")) %>% 
+  setNames(tolower(names(.)))
+
+ggplot(dat, aes(x = viikko, y = arvo, color = factor(vuosi))) +
+  geom_line() +
+  geom_point(size = 2, alpha = .7) +
+  facet_wrap(~name , scales = "free", ncol = 1) +
+  scale_x_continuous(breaks = 1:max(dat$viikko)) +
+        labs(fill = NULL, 
+             color = NULL, 
+             y = NULL,
+             title = unique(dat$atc_selite_fi),
+             x = "Viikko") +
+        scale_fill_manual(values = c("#3F679F","#FDCA50")) +
+        scale_color_manual(values = c("#3F679F","#FDCA50")) +
+        theme_light(base_family = "PT Sans") +
+        theme(legend.position = "top", 
+              panel.grid.minor = element_blank()) +
+        scale_y_continuous(labels = function(x) format(x, big.mark = " ",
+                                                       scientific = FALSE),
+                           limits = c(0,NA))
+```
+
+
+**Kartta sairaanhoitopiireittäisestä ostomäärien suhteellisesta erosta viikolla 12 ATC-luokassa `R`**
+
+```{r, fig.width=7, fig.height=11}
+library(geofi)
+dat <- df %>% 
+  filter(ALUEKOODI != 99,
+         VIIKKO == 12,
+         ATC_KOODI == "R") %>% 
+  select(-VAR_N_OSTOT,-VAR_N_HENKILOT) %>% 
+  tidyr::pivot_wider(names_from = VUOSI, 
+                      values_from = VAR_KUSTANNUS) %>% 
+  mutate(`ero (%)` = round(`2020` / `2019` * 100, 1)-100) %>% 
+  left_join(meta, by = c("ATC_KOODI" = "CODE")) %>% 
+  setNames(tolower(names(.))) 
+
+# Haetaan kuntadata ja aggregoidaan se sairaanhoitopiiritasolle
+muni <- get_municipalities()
+shp <- muni %>% 
+  group_by(sairaanhoitop_code) %>% 
+  summarise()
+
+mapd <- left_join(shp,dat, by = c("sairaanhoitop_code" = "aluekoodi"))
+
+ggplot(mapd, aes(fill = `ero (%)`, label = paste0(aluenimi_fi,"\n", `ero (%)`,"%"))) +
+  geom_sf(color = alpha("white", 1/3)) +
+  scale_fill_viridis_b() +
+  theme_minimal(base_family = "PT Sans") +
+  geom_sf_label(size = 3, color = "white", alpha = .7, family = "PT Sans") +
+  theme(axis.text = element_blank(),
+           axis.title = element_blank(),
+           panel.grid = element_blank()) +
+  labs(title = "ATC-luokan R (Hengityselinten sairauksien lääkkeet) kustannusten \nprosentuaalinen ero 2019 vs. 2020 viikolla 12",
+       fill = "%")
+
+```
+
+
+**Hajontakuvio sairaanhoitopiireittäisestä ostomäärien suhteellisesta erosta viikolla 12 ATC-luokassa `R`**
+
+```{r, fig.width=9, fig.height=9}
+library(geofi)
+dat <- df %>% 
+  filter(ALUEKOODI != 99,
+         VIIKKO == 12,
+         ATC_KOODI == "R") %>% 
+  select(-VAR_N_OSTOT,-VAR_N_HENKILOT) %>% 
+  tidyr::pivot_wider(names_from = VUOSI, 
+                      values_from = VAR_KUSTANNUS) %>% 
+  mutate(`ero (%)` = round(`2020` / `2019` * 100, 1)-100) %>% 
+  left_join(meta, by = c("ATC_KOODI" = "CODE")) %>% 
+  setNames(tolower(names(.))) 
+
+
+# PXWEB query 
+library(pxweb)
+library(tidyr)
+datplot <- pxweb_get(url = "http://pxnet2.stat.fi/PXWeb/api/v1/fi/Kuntien_avainluvut/2020/kuntien_avainluvut_2020_viimeisin.px",
+            query = list("Alue 2020"=c("*"),
+       "Tiedot"=c("M411","M478"))) %>% 
+  as.data.frame(column.name.type = "text", variable.value.type = "text") %>% 
+  pivot_wider(names_from = Tiedot, values_from = `Kuntien avainluvut`) %>% 
+  left_join(geofi::municipality_key_2020, by = c("Alue 2020" = "name_fi")) %>% 
+  group_by(sairaanhoitop_code) %>% 
+  summarise(`Yli 64-vuotiaiden osuus väestöstä, %, 2019` = weighted.mean(x = `Yli 64-vuotiaiden osuus väestöstä, %, 2019`, 
+                                                                         w = `Väkiluku, 2019`),
+            `Väkiluku, 2019` = sum(`Väkiluku, 2019`)) %>% 
+  left_join(dat, by = c("sairaanhoitop_code" = "aluekoodi"))
+  
+
+
+ggplot(datplot, aes(x = `Yli 64-vuotiaiden osuus väestöstä, %, 2019`, 
+                    y = `ero (%)`, 
+                    size = `Väkiluku, 2019`,
+                    color = aluenimi_fi,
+                    label = aluenimi_fi)) +
+  geom_point(alpha = .7) +
+  theme_light(base_family = "PT Sans") +
+  ggrepel::geom_label_repel(size = 3, family = "PT Sans") +
+  scale_radius(range=c(1, 30)) +
+  theme(legend.position = "none") +
+  labs(title = "ATC-luokan R (Hengityselinten sairauksien lääkkeet) kustannusten \nprosentuaalisen eron (2019 vs. 2020) viikolla 12 ja \nyli 64-vuotiaiden väestöosuuden (2019) yhteys sairaanhoitopiireittäin",
+       subtitle = "Pisteen koko on sairaanhoitopiirin väestömäärä")
+
+```
