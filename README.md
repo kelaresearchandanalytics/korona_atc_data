@@ -65,30 +65,31 @@ Aineisto päivittyy kerran viikossa keskiviikkoaamuisin.
 df <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv')
 head(df)
 #> # A tibble: 6 x 15
-#>   VUOSI VIIKKO VAR_KUSTANNUS VAR_N_OSTOT VAR_N_HENKILOT ATC_KOODI ATC_SELITE_FI ATC_SELITE_SV
-#>   <dbl>  <dbl>         <dbl>       <dbl>          <dbl> <chr>     <chr>         <chr>        
-#> 1  2019      2     36375566.      956694         528534 <NA>      (NA) NA       (NA) NA      
-#> 2  2019      3     36919671.      959393         526708 <NA>      (NA) NA       (NA) NA      
-#> 3  2019      4     37345883.      945287         519017 <NA>      (NA) NA       (NA) NA      
-#> 4  2019      5     39602251.      991698         540596 <NA>      (NA) NA       (NA) NA      
-#> 5  2019      6     38800197.     1008379         550861 <NA>      (NA) NA       (NA) NA      
-#> 6  2019      7     38803541.     1003305         551353 <NA>      (NA) NA       (NA) NA      
-#> # … with 7 more variables: ATC_SELITE_EN <chr>, ALUEKOODI <dbl>, ATC_TASO <dbl>, ALUENIMI_FI <chr>,
-#> #   ALUENIMI_SV <chr>, ALUENIMI_EN <chr>, UPDATED <dttm>
+#>   VUOSI VIIKKO VAR_KUSTANNUS VAR_N_OSTOT VAR_N_HENKILOT ATC_KOODI ATC_SELITE_FI
+#>   <dbl>  <dbl>         <dbl>       <dbl>          <dbl> <chr>     <chr>        
+#> 1  2020      2     33535483.      902657         495550 <NA>      (NA) NA      
+#> 2  2020      3     36844909.      989197         535830 <NA>      (NA) NA      
+#> 3  2020      4     36361103.      991607         532748 <NA>      (NA) NA      
+#> 4  2020      5     36850202.      979941         528581 <NA>      (NA) NA      
+#> 5  2020      6     41474529.     1090126         578880 <NA>      (NA) NA      
+#> 6  2020      7     39637069.     1035264         556701 <NA>      (NA) NA      
+#> # … with 8 more variables: ATC_SELITE_SV <chr>, ATC_SELITE_EN <chr>,
+#> #   ALUEKOODI <dbl>, ATC_TASO <dbl>, ALUENIMI_FI <chr>, ALUENIMI_SV <chr>,
+#> #   ALUENIMI_EN <chr>, UPDATED <dttm>
 ```
 
 ``` r
 meta <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/metadata_viikko.csv')
 head(meta)
 #> # A tibble: 6 x 6
-#>   CODE     VALUES          CLASS  NAME        DESCRIPTION                          UPDATED            
-#>   <chr>    <chr>           <chr>  <chr>       <chr>                                <dttm>             
-#> 1 VAR_KUS… <NA>            numer… Kustannus … Apteekkien välityksellä korvattujen… 2020-08-26 08:45:07
-#> 2 VAR_N_O… <NA>            integ… Ostojen lu… Ostolla tarkoitetaan yhdellä kertaa… 2020-08-26 08:45:07
-#> 3 ALUEKOO… <NA>            numer… Alueen koo… Koko Suomen koodi on 99. SHP-koodit… 2020-08-26 08:45:07
-#> 4 ATC_SEL… (NA) NA         chara… ATC-luokan… ATC-luokan selite in English         2020-08-26 08:45:07
-#> 5 ATC_SEL… (A) Alimentary… chara… ATC-luokan… ATC-luokan selite in English         2020-08-26 08:45:07
-#> 6 ATC_SEL… (B) Blood and … chara… ATC-luokan… ATC-luokan selite in English         2020-08-26 08:45:07
+#>   CODE    VALUES    CLASS  NAME     DESCRIPTION              UPDATED            
+#>   <chr>   <chr>     <chr>  <chr>    <chr>                    <dttm>             
+#> 1 VUOSI   <NA>      numer… Vuosi    Vuosi                    2020-08-26 08:45:07
+#> 2 ALUENI… Koko Suo… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
+#> 3 ALUENI… Varsinai… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
+#> 4 ALUENI… Satakunn… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
+#> 5 ALUENI… Kanta-Hä… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
+#> 6 ALUENI… Pirkanma… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
 ```
 
 **Viivakuvio ATC-luokasta `R`**
