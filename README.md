@@ -23,7 +23,7 @@ atc-luokan ja sairaanhoitopiirin mukaan viikkotasolla sisältäen
 seuraavat muuttujat:
 
 | CODE             | CLASS     | NAME                         | DESCRIPTION                                                                                                                                                                                                                                               |
-| :--------------- | :-------- | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:-----------------|:----------|:-----------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ALUEKOODI        | numeric   | Alueen koodi                 | Koko Suomen koodi on 99. SHP-koodit Tilastokeskuksen koodiston mukaiset SHP-tieto perustuu lääkkeen ostajan asuinkuntaan, joka vuoden 2019 osalta perustuu vuoden lopun tietoon ja vuoden 2020 osalta uusimpaan saatavilla olevaan tietoon.               |
 | ALUENIMI\_EN     | character | Region name in English       | Region name in English                                                                                                                                                                                                                                    |
 | ALUENIMI\_FI     | character | Alueen nimi suomeksi         | Koko Suomi tai sairaanhoitopiirin nimi. SHP-nimet Tilastokeskuksen koodiston mukaiset SHP-tieto perustuu lääkkeen ostajan asuinkuntaan, joka vuoden 2019 osalta perustuu vuoden lopun tietoon ja vuoden 2020 osalta uusimpaan saatavilla olevaan tietoon. |
@@ -43,16 +43,22 @@ seuraavat muuttujat:
 ## Aineiston käyttäminen
 
 Sovelluksen käyttämä aineisto on vapaasti käytettävissä [Nimeä 4.0
-Kansainvälinen (CC
-BY 4.0)](https://creativecommons.org/licenses/by/4.0/deed.fi)-lisenssin
+Kansainvälinen (CC BY
+4.0)](https://creativecommons.org/licenses/by/4.0/deed.fi)-lisenssin
 ehdoilla.
 
 Klikkaa linkistä hiiren oikealla näppäimellä ja valitse “tallenna linkki
 nimellä” ja anna tiedostopäätteeksi `csv`.
 
-  - Lataa
-    <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv" download="data_viikko.csv">data\_viikko.csv</a>
-  - Lataa
+Itse data on pilkottu vuosittaisiin tiedostoihin
+
+-   Lataa
+    <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2019.csv" download="data_viikko_2019.csv">data\_viikko\_2019.csv</a>
+-   Lataa
+    <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2020.csv" download="data_viikko_2020.csv">data\_viikko\_2020.csv</a>
+-   Lataa
+    <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2021.csv" download="data_viikko_2021.csv">data\_viikko\_2021.csv</a>
+-   Lataa
     <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/metadata_viikko.csv" download="metadata_viikko.csv">metadata\_viikko.csv</a>
 
 Aineisto päivittyy kerran viikossa keskiviikkoaamuisin.
@@ -62,17 +68,21 @@ Aineisto päivittyy kerran viikossa keskiviikkoaamuisin.
 **Datojen lataaminen**
 
 ``` r
-df <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv')
+df <- bind_rows(
+  readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2019.csv'),
+  readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2020.csv'),
+  readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2021.csv')
+)
 head(df)
 #> # A tibble: 6 x 15
 #>   VUOSI VIIKKO VAR_KUSTANNUS VAR_N_OSTOT VAR_N_HENKILOT ATC_KOODI ATC_SELITE_FI
 #>   <dbl>  <dbl>         <dbl>       <dbl>          <dbl> <chr>     <chr>        
-#> 1  2020      2     33535483.      902657         495550 <NA>      (NA) NA      
-#> 2  2020      3     36844909.      989197         535830 <NA>      (NA) NA      
-#> 3  2020      4     36361103.      991607         532748 <NA>      (NA) NA      
-#> 4  2020      5     36850202.      979941         528581 <NA>      (NA) NA      
-#> 5  2020      6     41474529.     1090126         578880 <NA>      (NA) NA      
-#> 6  2020      7     39637069.     1035264         556701 <NA>      (NA) NA      
+#> 1  2019      2     36375566.      956694         528534 <NA>      (NA) NA      
+#> 2  2019      3     36919671.      959393         526708 <NA>      (NA) NA      
+#> 3  2019      4     37345883.      945287         519017 <NA>      (NA) NA      
+#> 4  2019      5     39602251.      991698         540596 <NA>      (NA) NA      
+#> 5  2019      6     38800197.     1008379         550861 <NA>      (NA) NA      
+#> 6  2019      7     38803541.     1003305         551353 <NA>      (NA) NA      
 #> # … with 8 more variables: ATC_SELITE_SV <chr>, ATC_SELITE_EN <chr>,
 #> #   ALUEKOODI <dbl>, ATC_TASO <dbl>, ALUENIMI_FI <chr>, ALUENIMI_SV <chr>,
 #> #   ALUENIMI_EN <chr>, UPDATED <dttm>
@@ -84,12 +94,12 @@ head(meta)
 #> # A tibble: 6 x 6
 #>   CODE    VALUES    CLASS  NAME     DESCRIPTION              UPDATED            
 #>   <chr>   <chr>     <chr>  <chr>    <chr>                    <dttm>             
-#> 1 VUOSI   <NA>      numer… Vuosi    Vuosi                    2020-08-26 08:45:07
-#> 2 ALUENI… Koko Suo… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
-#> 3 ALUENI… Varsinai… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
-#> 4 ALUENI… Satakunn… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
-#> 5 ALUENI… Kanta-Hä… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
-#> 6 ALUENI… Pirkanma… chara… Alueen … Koko Suomi tai sairaanh… 2020-08-26 08:45:07
+#> 1 ALUENI… Koko Suo… chara… Alueen … Koko Suomi tai sairaanh… 2021-04-01 09:35:41
+#> 2 ALUENI… Varsinai… chara… Alueen … Koko Suomi tai sairaanh… 2021-04-01 09:35:41
+#> 3 ALUENI… Satakunn… chara… Alueen … Koko Suomi tai sairaanh… 2021-04-01 09:35:41
+#> 4 ALUENI… Kanta-Hä… chara… Alueen … Koko Suomi tai sairaanh… 2021-04-01 09:35:41
+#> 5 ALUENI… Pirkanma… chara… Alueen … Koko Suomi tai sairaanh… 2021-04-01 09:35:41
+#> 6 ALUENI… Päijät-H… chara… Alueen … Koko Suomi tai sairaanh… 2021-04-01 09:35:41
 ```
 
 **Viivakuvio ATC-luokasta `R`**
@@ -117,8 +127,8 @@ ggplot(dat, aes(x = viikko, y = arvo, color = factor(vuosi))) +
              y = NULL,
              title = unique(dat$atc_selite_fi),
              x = "Viikko") +
-        scale_fill_manual(values = c("#3F679F","#FDCA50")) +
-        scale_color_manual(values = c("#3F679F","#FDCA50")) +
+        scale_fill_manual(values = c('#e41a1c','#377eb8','#4daf4a')) +
+        scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a')) +
         theme_light(base_family = "PT Sans") +
         theme(legend.position = "top", 
               panel.grid.minor = element_blank()) +
@@ -129,8 +139,8 @@ ggplot(dat, aes(x = viikko, y = arvo, color = factor(vuosi))) +
 
 ![](README-unnamed-chunk-5-1.png)<!-- -->
 
-**Kartta sairaanhoitopiireittäisestä ostomäärien suhteellisesta erosta
-viikolla 12 ATC-luokassa `R`**
+**Kartta sairaanhoitopiireittäisistä ostomääristä viikolla 12
+ATC-luokassa `R`**
 
 ``` r
 library(geofi)
@@ -138,10 +148,7 @@ dat <- df %>%
   filter(ALUEKOODI != 99,
          VIIKKO == 12,
          ATC_KOODI == "R") %>% 
-  select(-VAR_N_OSTOT,-VAR_N_HENKILOT) %>% 
-  tidyr::pivot_wider(names_from = VUOSI, 
-                      values_from = VAR_KUSTANNUS) %>% 
-  mutate(`ero (%)` = round(`2020` / `2019` * 100, 1)-100) %>% 
+  select(-VAR_N_OSTOT,-VAR_N_HENKILOT,-UPDATED) %>% 
   left_join(meta, by = c("ATC_KOODI" = "CODE")) %>% 
   setNames(tolower(names(.))) 
 
@@ -153,11 +160,12 @@ shp <- muni %>%
 
 mapd <- left_join(shp,dat, by = c("sairaanhoitop_code" = "aluekoodi"))
 
-ggplot(mapd, aes(fill = `ero (%)`, label = paste0(aluenimi_fi,"\n", `ero (%)`,"%"))) +
+ggplot(mapd, aes(fill = var_kustannus, label = paste0(aluenimi_fi,"\n", var_kustannus ))) +
   geom_sf(color = alpha("white", 1/3)) +
   scale_fill_viridis_b() +
   theme_minimal(base_family = "PT Sans") +
   geom_sf_label(size = 3, color = "white", alpha = .7, family = "PT Sans") +
+  facet_wrap(~vuosi) +
   theme(axis.text = element_blank(),
            axis.title = element_blank(),
            panel.grid = element_blank()) +
@@ -166,53 +174,3 @@ ggplot(mapd, aes(fill = `ero (%)`, label = paste0(aluenimi_fi,"\n", `ero (%)`,"%
 ```
 
 ![](README-unnamed-chunk-6-1.png)<!-- -->
-
-**Hajontakuvio sairaanhoitopiireittäisestä ostomäärien suhteellisesta
-erosta viikolla 12 ATC-luokassa `R`**
-
-``` r
-library(geofi)
-dat <- df %>% 
-  filter(ALUEKOODI != 99,
-         VIIKKO == 12,
-         ATC_KOODI == "R") %>% 
-  select(-VAR_N_OSTOT,-VAR_N_HENKILOT) %>% 
-  tidyr::pivot_wider(names_from = VUOSI, 
-                      values_from = VAR_KUSTANNUS) %>% 
-  mutate(`ero (%)` = round(`2020` / `2019` * 100, 1)-100) %>% 
-  left_join(meta, by = c("ATC_KOODI" = "CODE")) %>% 
-  setNames(tolower(names(.))) 
-
-
-# PXWEB query 
-library(pxweb)
-library(tidyr)
-datplot <- pxweb_get(url = "http://pxnet2.stat.fi/PXWeb/api/v1/fi/Kuntien_avainluvut/2020/kuntien_avainluvut_2020_viimeisin.px",
-            query = list("Alue 2020"=c("*"),
-       "Tiedot"=c("M411","M478"))) %>% 
-  as.data.frame(column.name.type = "text", variable.value.type = "text") %>% 
-  pivot_wider(names_from = Tiedot, values_from = `Kuntien avainluvut`) %>% 
-  left_join(geofi::municipality_key_2020, by = c("Alue 2020" = "name_fi")) %>% 
-  group_by(sairaanhoitop_code) %>% 
-  summarise(`Yli 64-vuotiaiden osuus väestöstä, %, 2019` = weighted.mean(x = `Yli 64-vuotiaiden osuus väestöstä, %, 2019`, 
-                                                                         w = `Väkiluku, 2019`),
-            `Väkiluku, 2019` = sum(`Väkiluku, 2019`)) %>% 
-  left_join(dat, by = c("sairaanhoitop_code" = "aluekoodi"))
-  
-
-
-ggplot(datplot, aes(x = `Yli 64-vuotiaiden osuus väestöstä, %, 2019`, 
-                    y = `ero (%)`, 
-                    size = `Väkiluku, 2019`,
-                    color = aluenimi_fi,
-                    label = aluenimi_fi)) +
-  geom_point(alpha = .7) +
-  theme_light(base_family = "PT Sans") +
-  ggrepel::geom_label_repel(size = 3, family = "PT Sans") +
-  scale_radius(range=c(1, 30)) +
-  theme(legend.position = "none") +
-  labs(title = "ATC-luokan R (Hengityselinten sairauksien lääkkeet) kustannusten \nprosentuaalisen eron (2019 vs. 2020) viikolla 12 ja \nyli 64-vuotiaiden väestöosuuden (2019) yhteys sairaanhoitopiireittäin",
-       subtitle = "Pisteen koko on sairaanhoitopiirin väestömäärä")
-```
-
-![](README-unnamed-chunk-7-1.png)<!-- -->

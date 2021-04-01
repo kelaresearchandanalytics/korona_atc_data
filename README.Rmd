@@ -48,7 +48,11 @@ Sovelluksen käyttämä aineisto on vapaasti käytettävissä [Nimeä 4.0 Kansai
 
 Klikkaa linkistä hiiren oikealla näppäimellä ja valitse "tallenna linkki nimellä" ja anna tiedostopäätteeksi `csv`.
 
-- Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv" download="data_viikko.csv">data_viikko.csv</a>
+Itse data on pilkottu vuosittaisiin tiedostoihin
+
+- Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2019.csv" download="data_viikko_2019.csv">data_viikko_2019.csv</a>
+- Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2020.csv" download="data_viikko_2020.csv">data_viikko_2020.csv</a>
+- Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2021.csv" download="data_viikko_2021.csv">data_viikko_2021.csv</a>
 - Lataa <a href="https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/metadata_viikko.csv" download="metadata_viikko.csv">metadata_viikko.csv</a>
 
 Aineisto päivittyy kerran viikossa keskiviikkoaamuisin.
@@ -58,7 +62,11 @@ Aineisto päivittyy kerran viikossa keskiviikkoaamuisin.
 **Datojen lataaminen**
 
 ```{r, eval = TRUE}
-df <- readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko.csv')
+df <- bind_rows(
+  readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2019.csv'),
+  readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2020.csv'),
+  readr::read_csv2('https://github.com/kelaresearchandanalytics/korona_atc_data/raw/master/data_viikko_2021.csv')
+)
 head(df)
 ```
 
@@ -93,8 +101,8 @@ ggplot(dat, aes(x = viikko, y = arvo, color = factor(vuosi))) +
              y = NULL,
              title = unique(dat$atc_selite_fi),
              x = "Viikko") +
-        scale_fill_manual(values = c("#3F679F","#FDCA50")) +
-        scale_color_manual(values = c("#3F679F","#FDCA50")) +
+        scale_fill_manual(values = c('#e41a1c','#377eb8','#4daf4a')) +
+        scale_color_manual(values = c('#e41a1c','#377eb8','#4daf4a')) +
         theme_light(base_family = "PT Sans") +
         theme(legend.position = "top", 
               panel.grid.minor = element_blank()) +
@@ -104,18 +112,15 @@ ggplot(dat, aes(x = viikko, y = arvo, color = factor(vuosi))) +
 ```
 
 
-**Kartta sairaanhoitopiireittäisestä ostomäärien suhteellisesta erosta viikolla 12 ATC-luokassa `R`**
+**Kartta sairaanhoitopiireittäisistä ostomääristä viikolla 12 ATC-luokassa `R`**
 
-```{r, fig.width=7, fig.height=11}
+```{r, fig.width=11, fig.height=6}
 library(geofi)
 dat <- df %>% 
   filter(ALUEKOODI != 99,
          VIIKKO == 12,
          ATC_KOODI == "R") %>% 
-  select(-VAR_N_OSTOT,-VAR_N_HENKILOT) %>% 
-  tidyr::pivot_wider(names_from = VUOSI, 
-                      values_from = VAR_KUSTANNUS) %>% 
-  mutate(`ero (%)` = round(`2020` / `2019` * 100, 1)-100) %>% 
+  select(-VAR_N_OSTOT,-VAR_N_HENKILOT,-UPDATED) %>% 
   left_join(meta, by = c("ATC_KOODI" = "CODE")) %>% 
   setNames(tolower(names(.))) 
 
@@ -127,11 +132,12 @@ shp <- muni %>%
 
 mapd <- left_join(shp,dat, by = c("sairaanhoitop_code" = "aluekoodi"))
 
-ggplot(mapd, aes(fill = `ero (%)`, label = paste0(aluenimi_fi,"\n", `ero (%)`,"%"))) +
+ggplot(mapd, aes(fill = var_kustannus, label = paste0(aluenimi_fi,"\n", var_kustannus ))) +
   geom_sf(color = alpha("white", 1/3)) +
   scale_fill_viridis_b() +
   theme_minimal(base_family = "PT Sans") +
   geom_sf_label(size = 3, color = "white", alpha = .7, family = "PT Sans") +
+  facet_wrap(~vuosi) +
   theme(axis.text = element_blank(),
            axis.title = element_blank(),
            panel.grid = element_blank()) +
@@ -140,51 +146,3 @@ ggplot(mapd, aes(fill = `ero (%)`, label = paste0(aluenimi_fi,"\n", `ero (%)`,"%
 
 ```
 
-
-**Hajontakuvio sairaanhoitopiireittäisestä ostomäärien suhteellisesta erosta viikolla 12 ATC-luokassa `R`**
-
-```{r, fig.width=9, fig.height=9}
-library(geofi)
-dat <- df %>% 
-  filter(ALUEKOODI != 99,
-         VIIKKO == 12,
-         ATC_KOODI == "R") %>% 
-  select(-VAR_N_OSTOT,-VAR_N_HENKILOT) %>% 
-  tidyr::pivot_wider(names_from = VUOSI, 
-                      values_from = VAR_KUSTANNUS) %>% 
-  mutate(`ero (%)` = round(`2020` / `2019` * 100, 1)-100) %>% 
-  left_join(meta, by = c("ATC_KOODI" = "CODE")) %>% 
-  setNames(tolower(names(.))) 
-
-
-# PXWEB query 
-library(pxweb)
-library(tidyr)
-datplot <- pxweb_get(url = "http://pxnet2.stat.fi/PXWeb/api/v1/fi/Kuntien_avainluvut/2020/kuntien_avainluvut_2020_viimeisin.px",
-            query = list("Alue 2020"=c("*"),
-       "Tiedot"=c("M411","M478"))) %>% 
-  as.data.frame(column.name.type = "text", variable.value.type = "text") %>% 
-  pivot_wider(names_from = Tiedot, values_from = `Kuntien avainluvut`) %>% 
-  left_join(geofi::municipality_key_2020, by = c("Alue 2020" = "name_fi")) %>% 
-  group_by(sairaanhoitop_code) %>% 
-  summarise(`Yli 64-vuotiaiden osuus väestöstä, %, 2019` = weighted.mean(x = `Yli 64-vuotiaiden osuus väestöstä, %, 2019`, 
-                                                                         w = `Väkiluku, 2019`),
-            `Väkiluku, 2019` = sum(`Väkiluku, 2019`)) %>% 
-  left_join(dat, by = c("sairaanhoitop_code" = "aluekoodi"))
-  
-
-
-ggplot(datplot, aes(x = `Yli 64-vuotiaiden osuus väestöstä, %, 2019`, 
-                    y = `ero (%)`, 
-                    size = `Väkiluku, 2019`,
-                    color = aluenimi_fi,
-                    label = aluenimi_fi)) +
-  geom_point(alpha = .7) +
-  theme_light(base_family = "PT Sans") +
-  ggrepel::geom_label_repel(size = 3, family = "PT Sans") +
-  scale_radius(range=c(1, 30)) +
-  theme(legend.position = "none") +
-  labs(title = "ATC-luokan R (Hengityselinten sairauksien lääkkeet) kustannusten \nprosentuaalisen eron (2019 vs. 2020) viikolla 12 ja \nyli 64-vuotiaiden väestöosuuden (2019) yhteys sairaanhoitopiireittäin",
-       subtitle = "Pisteen koko on sairaanhoitopiirin väestömäärä")
-
-```
